@@ -1,14 +1,23 @@
 package com.mphasis.main;
 
+import jdk.jfr.internal.tool.Main;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.PriorityQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Connection implements Runnable {
-	
+
+	public static  Logger logger;
+
+	static {
+		logger= Logger.getLogger(Main.class.getName());
+	}
 	
 	//  This will implement runnable
 	
@@ -54,16 +63,20 @@ public class Connection implements Runnable {
 			 // now we must get the ID, and type from the client
 			//Args from client  args[clientID, connectionType]
 			 String bufferString = "";
-			System.out.println("Reading for type of connection from client...");
+
+
+			logger.log(Level.INFO,"Reading for type of connection from client...");
 			
 			bufferString = in.readLine();
 			String[] clientInfo = bufferString.split("\\|");
 			
 			this.clientID = clientInfo[0];
-			System.out.println("Conn type passed is " + clientInfo[1]);
+
+			logger.log(Level.INFO,"Conn type passed is " + clientInfo[1]);
 			
 			this.connType = ClientConnectionType.valueOf(clientInfo[1].trim());	
-			System.out.println("Starting feed for client " + clientID + "on connection type " + connType.toString()); 
+
+			logger.log(Level.INFO, "Starting feed for client " + clientID + "on connection type " + connType.toString());
 			//we also need to add this connection to the exchange's dictionary of conenctions
 			
 			
@@ -80,7 +93,8 @@ public class Connection implements Runnable {
 					break;
 					
 				default:
-					System.out.println("Error starting client connection, improper connection type specified from client");
+					logger.log(Level.INFO,"Error starting client connection, improper connection type specified from client");
+
 					conn.close();
 					break;
 			}//end switch
@@ -88,7 +102,7 @@ public class Connection implements Runnable {
 		}
 		catch (IOException e)
 		{
-			System.out.println("error getting streams from client");
+			logger.log(Level.INFO,"error getting streams from client" );
 		}
 		
 		
@@ -102,7 +116,9 @@ public class Connection implements Runnable {
 		
 		//listen in loop for messages from client
 		// parse message, and add to exchange global queue 
-		System.out.println("Starting exec connection now...");
+		System.out.println();
+		logger.log(Level.INFO,"Starting exec connection now...");
+
 		while(!isStopped){
 			String input;
 			try{
@@ -111,7 +127,8 @@ public class Connection implements Runnable {
 				while( ( input = in.readLine()) != null)
 				{
 					String[] messageArray = input.split("\\|", 5);
-					System.out.println("Message received from the client: " + input);
+
+					logger.log(Level.INFO,"Message received from the client: " + input);
 					
 					//now we process the message and send commands to exchange accordingly
 					String messageType = messageArray[1];
@@ -120,25 +137,20 @@ public class Connection implements Runnable {
 					
 					case "NewOrder":
 						//create new order object.
-						System.out.println("New Order received!");
+
+						logger.log(Level.INFO,"New Order received!");
 						Order incomingOrder = new Order(messageArray[0], OrderType.valueOf(messageArray[2]), Integer.parseInt(messageArray[3]), Double.parseDouble(messageArray[4]));
 						exchange.addOrder(incomingOrder);	
 						break;
 						
 					case "CancelOrder":
-						System.out.println("Cancellation request received");
-						
+						logger.log(Level.INFO,"New Order received!");
 						exchange.cancelOrder(messageArray[0], messageArray[2]);
-						
 						break;
-						
-						
 					case "MarketData":
-						System.out.println("Sending Request for market data, client ID: " + messageArray[0]);
-						
+						logger.log(Level.INFO,"Sending Request for market data, client ID: " + messageArray[0]);
 						exchange.sendMarketData(messageArray[0]);
 						break;
-						
 					 default:
 						 
 						break;
@@ -147,7 +159,8 @@ public class Connection implements Runnable {
 				}
 			} catch (IOException e)
 			{
-				System.out.println("Exception throw while reading from exec feed");
+
+				logger.log(Level.INFO,"Exception throw while reading from exec feed");
 			}
 			
 		}//end while
@@ -158,7 +171,8 @@ public class Connection implements Runnable {
 	public void runFeed() throws IOException{
 		// wait for messages to be put in this connections 'queue'
 		// transmist message to client.
-		System.out.println("Registering client with exchange..." + this.toString());
+
+		logger.log(Level.INFO,"Registering client with exchange..." + this.toString());
 		exchange.registerClientFeed(clientID, this);
 		// out = new PrintWriter(conn.getOutputStream(), true);
 		
@@ -193,7 +207,7 @@ public class Connection implements Runnable {
 	
 	public void addMessage(String message)
 	{
-		System.out.println("Connection adding new message to it's own queue");
+		logger.log(Level.INFO,"Connection adding new message to it's own queue");
 		
 		this.feedMessageQueue.add(message);
 		out.println(message);
