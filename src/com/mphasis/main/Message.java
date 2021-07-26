@@ -1,4 +1,4 @@
-package com.huhy.main;
+package com.mphasis.main;
 
 public class Message {
 

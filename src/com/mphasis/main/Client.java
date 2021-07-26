@@ -1,4 +1,4 @@
-package com.huhy.main;
+package com.mphasis.main;
 
 import java.net.Socket;
 import java.util.Queue;
@@ -103,7 +103,7 @@ public class Client {
 		{
 			printMenu();
 			
-			String command = c.readLine("%s");
+			String command = c.readLine();
 			int action = Integer.parseInt(command);
 			switch(action){
 			case 1:
